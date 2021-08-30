@@ -1,4 +1,4 @@
-import type { OptionalArrayValuesMap, OptionalValues, UnionKeys } from "./types/component";
+import type { OptionalArrayValuesMap, OptionalValues, UnionKeys, UnionValues } from "./types/component";
 
 type Name = { name: string };
 type Position = { position: { x: number, y: number } };
@@ -9,3 +9,4 @@ export type Component = Name | Position | Renderable;
 export type ComponentMap = OptionalArrayValuesMap<Component>;
 export type ComponentOption = OptionalValues<Component>;
 export type ComponentKind = UnionKeys<Component>;
+export type ComponentData = UnionValues<Component>;

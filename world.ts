@@ -1,6 +1,6 @@
-import type { ComponentKind, Component, ComponentMap } from './components'
+import type { ComponentKind, Component, ComponentMap, ComponentData } from './components'
 import { Entity } from './types/entity'
-import { none } from './types/option'
+import { isSome, none, unwrap } from './types/option'
 
 export class World {
     #entityCount: number
@@ -40,7 +40,8 @@ export class World {
 
     public getComponentDataForEntity(entity: Entity, component: ComponentKind) {
         const data = this.#components[component][entity];
-        // if (isSome(data)) {}
-        // todo
+        if (isSome<ComponentData>(data)) {
+            const some = unwrap<ComponentData>(data);
+        }
     }
 }
