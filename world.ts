@@ -1,6 +1,6 @@
-import { Component, ComponentKind, ComponentMap } from './components'
+import type { ComponentKind, Component, ComponentMap } from './components'
 import { Entity } from './types/entity'
-import { isSome, none, some } from './types/option'
+import { none } from './types/option'
 
 export class World {
     #entityCount: number
@@ -16,7 +16,10 @@ export class World {
     }
 
     public newEntity (): Entity {
-      Object.keys(this.#components).forEach((k) => this.#components[k as ComponentKind].push(none()))
+        Object.keys(this.#components).forEach((k) => {
+            this.#components.name
+            this.#components[k as ComponentKind].push(none())
+      })
       return this.#entityCount++
     }
 
