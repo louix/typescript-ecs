@@ -1,8 +1,9 @@
-import type { OptionalArrayValuesMap, OptionalValues, UnionKeys, UnionValues } from "./types/component";
+import type { OptionalArrayValuesMap, OptionalValues, UnionKeys, UnionValues } from "./types/ecs/component";
+import { Coordinates2D } from "./types/helpers/coordinates";
 
 // Add new components here
 type Name = { name: string };
-type Position = { position: { x: number, y: number } };
+type Position = { position: Coordinates2D };
 type Renderable = { renderable: void };
 
 // Make sure to add your components to the below union
