@@ -1,7 +1,7 @@
-import type { ComponentKind, Component, ComponentMap, ComponentData } from './components'
-import { Entity } from './types/ecs/entity'
-import { System } from './types/ecs/system'
-import { isSome, none, some, unwrap } from './types/ecs/option'
+import type { ComponentKind, Component, ComponentMap } from './components'
+import type { Entity } from './types/game/entity'
+import type { System } from './types/game/system'
+import { isSome, none, some } from './types/game/option'
 
 export class World {
   #entityCount: number
@@ -11,9 +11,11 @@ export class World {
   public constructor() {
     this.#entityCount = 0
     this.#components = { // todo: make this dynamic?
-      name: [],
+      shape: [],
       position: [],
-      renderable: []
+      velocity: [],
+      renderable: [],
+      regrowing: []
     }
     this.#systems = [];
   }
@@ -25,11 +27,11 @@ export class World {
    */
   public newEntity(): Entity {
     Object.keys(this.#components).forEach((k) => {
-      this.#components.name
       this.#components[k as ComponentKind].push(none())
     })
     return this.#entityCount++
   }
+
   /**
    * Add a component to an entity
    * @example
@@ -42,6 +44,18 @@ export class World {
     this.#components[key as ComponentKind][entity] = some(value)
   }
 
+    /**
+   * Remove a component from an entity
+   * @example
+   * const world = new World();
+   * const myEntity = world.newEntity();
+   * world.addComponentToEntity(myEntity, {name: "entity"});
+   * world.removeComponentFromEntity(myEntity, "name");
+   */
+     public removeComponentFromEntity(entity: Entity, component: ComponentKind): void {
+      this.#components[component][entity] = none()
+    }
+
   /**
    * Get a list of entities by component.
    * Usually used in a system to get the components it needs to act on.
@@ -50,6 +64,8 @@ export class World {
    */
   public getEntitiesByComponentKinds(...components: ComponentKind[]): Entity[] {
     const entities = []
+    // This might be able to be done as so:
+    // Memoised get every "some" element from each array, iterate through to find duplicate numbers? zip? something else?
     for (let i = 0; i < this.#entityCount; i++) {
       if (components.every((c) => isSome<unknown>(this.#components[c][i]))) {
         entities.push(i)
@@ -87,9 +103,9 @@ export class World {
  * const world = new World();
  * var time = performance.now();
  * var delta = time - previous;
- * world.run(delta, time)
+ * world.tick(delta, time)
  */
-  public run(delta: number, time: number) {
+  public tick(delta: number, time: number) {
     this.#systems.forEach((system) => system(delta, time)(this));
   }
 }
