@@ -2,11 +2,13 @@ import type { ComponentKind, Component, ComponentMap } from './components'
 import type { Entity } from './types/game/entity'
 import type { System } from './types/game/system'
 import { isSome, none, some } from './types/game/option'
+import { EntityData as RenderableEntityData, mkRenderSystem } from './systems/renderSystem'
 
 export class World {
   #entityCount: number
   #components: ComponentMap
   #systems: Array<System>
+  #renderSystem: (world: World) => Array<RenderableEntityData>
 
   public constructor() {
     this.#entityCount = 0
@@ -18,6 +20,7 @@ export class World {
       regrowing: []
     }
     this.#systems = [];
+    this.#renderSystem = mkRenderSystem();
   }
   /**
    * Create and return a new entity
@@ -98,14 +101,15 @@ export class World {
   }
 
   /**
- * Execute all associated systems!
+ * Execute all associated systems, and return everything that needs rendering!
  * @example
  * const world = new World();
- * var time = performance.now();
- * var delta = time - previous;
- * world.tick(delta, time)
+ * const time = performance.now();
+ * const delta = time - previous;
+ * const renderables = world.tick(delta, time)
  */
   public tick(delta: number, time: number) {
     this.#systems.forEach((system) => system(delta, time)(this));
+    return this.#renderSystem(this);
   }
 }
