@@ -1,5 +1,4 @@
 import type { Entity } from "../types/game/entity";
-import { unsafeUnwrap } from "../types/game/option";
 import type { World } from "../world";
 
 export interface EntityData {
@@ -9,11 +8,11 @@ export interface EntityData {
 }
 
 const getShape = (entity: Entity, world: World) => {
-    return unsafeUnwrap(world.getComponentDataForEntity(entity, "shape"));
+    return world.getComponentDataForEntity(entity, "shape");
 }
 
 const getPosition = (entity: Entity, world: World) => {
-    return unsafeUnwrap(world.getComponentDataForEntity(entity, "position"));
+    return world.getComponentDataForEntity(entity, "position");
 }
 
 export const mkRenderSystem = () => // TODO: type this better?

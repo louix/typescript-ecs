@@ -1,7 +1,6 @@
 import type { ComponentKind, Component, ComponentMap } from './components'
 import type { Entity } from './types/game/entity'
 import type { System } from './types/game/system'
-import { isSome, none, some } from './types/game/option'
 import { EntityData as RenderableEntityData, mkRenderSystem } from './systems/renderSystem'
 
 export class World {
@@ -30,7 +29,7 @@ export class World {
    */
   public newEntity(): Entity {
     Object.keys(this.#components).forEach((k) => {
-      this.#components[k as ComponentKind].push(none())
+      this.#components[k as ComponentKind].push(null)
     })
     return this.#entityCount++
   }
@@ -44,7 +43,7 @@ export class World {
    */
   public addComponentToEntity(entity: Entity, component: Component): void {
     const [key, value] = Object.entries(component)[0]
-    this.#components[key as ComponentKind][entity] = some(value)
+    this.#components[key as ComponentKind][entity] = value
   }
 
     /**
@@ -56,7 +55,7 @@ export class World {
    * world.removeComponentFromEntity(myEntity, "name");
    */
      public removeComponentFromEntity(entity: Entity, component: ComponentKind): void {
-      this.#components[component][entity] = none()
+      this.#components[component][entity] = null
     }
 
   /**
@@ -70,7 +69,7 @@ export class World {
     // This might be able to be done as so:
     // Memoised get every "some" element from each array, iterate through to find duplicate numbers? zip? something else?
     for (let i = 0; i < this.#entityCount; i++) {
-      if (components.every((c) => isSome<unknown>(this.#components[c][i]))) {
+      if (components.every((c) => this.#components[c][i] !== null)) {
         entities.push(i)
       }
     }

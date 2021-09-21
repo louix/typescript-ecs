@@ -1,10 +1,10 @@
 import type { Option } from "./option";
 
-export type OptionalArrayValuesMap<T extends Record<string, unknown>> = UnionToIntersection<{[k in keyof T]: Array<Option<T[k]>>}>;
+export type OptionalArrayValuesMap<T extends Record<string, unknown>> = UnionToIntersection<{[k in keyof T]: Array<T[k] | null>}>;
 export type ValuesMap<T extends Record<string, unknown>> = UnionToIntersection<{[k in keyof T]: T[k]}>;
 
 export type OptionalValues<T extends Record<string, unknown>> = {
-    [k in keyof T]: Option<T[k]>
+    [k in keyof T]: T[k] | null
 }
 
 export type UnionKeys<T> = T extends T ? keyof T : never;
