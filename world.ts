@@ -1,25 +1,20 @@
-import type { ComponentKind, Component, ComponentMap } from './components'
-import type { Entity } from './types/game/entity'
-import type { System } from './types/game/system'
-import { EntityData as RenderableEntityData, mkRenderSystem } from './systems/renderSystem'
+import type { Entity, OptionalArrayValuesMap, System, TypeToUnion } from "./types";
 
-export class World {
+export class World<Components extends Record<string, unknown>, RenderableData extends Record<string, unknown>> {
   #entityCount: number
-  #components: ComponentMap
-  #systems: Array<System>
-  #renderSystem: (world: World) => Array<RenderableEntityData>
+  #components: OptionalArrayValuesMap<Components>
+  #systems: Array<System<this>>
+  #renderSystem: (world: World<Components, RenderableData>) => Array<RenderableData>
 
-  public constructor() {
+  #initialiseComponent(componentKind: keyof Components) {
+    this.#components[componentKind] = new Array(this.#entityCount).fill(null);
+  }
+
+  public constructor(renderSystem: (world: World<Components, RenderableData>) => Array<RenderableData>) {
     this.#entityCount = 0
-    this.#components = { // todo: make this dynamic?
-      shape: [],
-      position: [],
-      velocity: [],
-      renderable: [],
-      regrowing: []
-    }
+    this.#components = {};
     this.#systems = [];
-    this.#renderSystem = mkRenderSystem();
+    this.#renderSystem = renderSystem;
   }
   /**
    * Create and return a new entity
@@ -29,24 +24,41 @@ export class World {
    */
   public newEntity(): Entity {
     Object.keys(this.#components).forEach((k) => {
-      this.#components[k as ComponentKind].push(null)
+      if (this.#components[k as keyof Components] === undefined) {
+        this.#initialiseComponent(k)
+      }
+      this.#components[k as keyof Components]!.push(null)
     })
     return this.#entityCount++
   }
 
   /**
-   * Add a component to an entity
+   * Alias for addComponentToEntity
+   */
+  public updateComponentForEntity(entity: Entity, component: TypeToUnion<Components>): void {
+    const [key, value] = Object.entries(component)[0]
+    if (this.#components[key as keyof Components] === undefined) {
+      this.#initialiseComponent(key)
+    }
+    this.#components[key as keyof Components]![entity] = value
+  }
+
+  /**
+   * Add (or replace) a component to an entity
    * @example
    * const world = new World();
    * const myEntity = world.newEntity();
    * world.addComponentToEntity(myEntity, {name: "entity"});
    */
-  public addComponentToEntity(entity: Entity, component: Component): void {
+  public addComponentToEntity(entity: Entity, component: TypeToUnion<Components>): void {
     const [key, value] = Object.entries(component)[0]
-    this.#components[key as ComponentKind][entity] = value
+    if (this.#components[key as keyof Components] === undefined) {
+      this.#initialiseComponent(key)
+    }
+    this.#components[key as keyof Components]![entity] = value
   }
 
-    /**
+  /**
    * Remove a component from an entity
    * @example
    * const world = new World();
@@ -54,9 +66,12 @@ export class World {
    * world.addComponentToEntity(myEntity, {name: "entity"});
    * world.removeComponentFromEntity(myEntity, "name");
    */
-     public removeComponentFromEntity(entity: Entity, component: ComponentKind): void {
-      this.#components[component][entity] = null
+  public removeComponentFromEntity(entity: Entity, componentName: keyof Components): void {
+    if (this.#components[componentName] === undefined) {
+      this.#initialiseComponent(componentName)
     }
+    this.#components[componentName]![entity] = null
+  }
 
   /**
    * Get a list of entities by component.
@@ -64,12 +79,12 @@ export class World {
    * @example
    * const entities = world.getEntitiesByComponentKinds("position", "velocity")
    */
-  public getEntitiesByComponentKinds(...components: ComponentKind[]): Entity[] {
+  public getEntitiesByComponentKinds(...componentNames: Array<keyof Components>): Array<Entity> {
     const entities = []
     // This might be able to be done as so:
     // Memoised get every "some" element from each array, iterate through to find duplicate numbers? zip? something else?
     for (let i = 0; i < this.#entityCount; i++) {
-      if (components.every((c) => this.#components[c][i] !== null)) {
+      if (componentNames.every((c) => this.#components[c]?.[i] !== null)) {
         entities.push(i)
       }
     }
@@ -84,8 +99,8 @@ export class World {
    * world.addComponentToEntity(myEntity, {name: "entity"});
    * world.getComponentDataForEntity(myEntity, "name");
    */
-  public getComponentDataForEntity<T extends ComponentKind>(entity: Entity, component: T): ComponentMap[T][number] {
-    return this.#components[component][entity];
+  public getComponentDataForEntity<T extends keyof Components>(entity: Entity, componentName: T) {
+    return this.#components[componentName]![entity];
   }
 
   /**
@@ -95,7 +110,7 @@ export class World {
    * const mySystem = //... snip
    * world.registerSystem(mySystem);
    */
-  public registerSystem(system: System) {
+  public registerSystem(system: System<this>) {
     this.#systems.push(system);
   }
 
