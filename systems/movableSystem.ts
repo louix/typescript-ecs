@@ -1,5 +1,4 @@
 import { getRandomVelocity } from "../types/game/helper";
-import { unsafeUnwrap } from "../types/game/option";
 import type { System } from "../types/game/system";
 import type { Velocity2D, Coordinates2D } from "../types/space";
 import type { World } from "../world";
@@ -15,8 +14,8 @@ const needsNewVelocity = (velocity: Velocity2D) => {
 export const mkMovableSystem = (worldSize: Coordinates2D): System =>
     (delta: number, _: number) => (world: World) => {
         world.getEntitiesByComponentKinds("position", "velocity").forEach((entity) => {
-            const position = unsafeUnwrap(world.getComponentDataForEntity(entity, "position"));
-            const velocity = unsafeUnwrap(world.getComponentDataForEntity(entity, "velocity"));
+            const position = world.getComponentDataForEntity(entity, "position")!;
+            const velocity = world.getComponentDataForEntity(entity, "velocity")!;
             position.x += (velocity.x * delta) % (worldSize.x + IMAGE_MAX)
             position.y += (velocity.y * delta) % (worldSize.y + IMAGE_MAX)
 
