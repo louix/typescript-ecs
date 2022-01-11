@@ -16,6 +16,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
     this.#systems = [];
     this.#renderSystem = renderSystem;
   }
+
   /**
    * Create and return a new entity
    * @example
@@ -115,13 +116,13 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   }
 
   /**
- * Execute all associated systems, and return everything that needs rendering!
- * @example
- * const world = new World();
- * const time = performance.now();
- * const delta = time - previous;
- * const renderables = world.tick(delta, time)
- */
+   * Execute all associated systems, and return everything that needs rendering!
+   * @example
+   * const world = new World();
+   * const time = performance.now();
+   * const delta = time - previous;
+   * const renderables = world.tick(delta, time)
+   */
   public tick(delta: number, time: number) {
     this.#systems.forEach((system) => system(delta, time)(this));
     return this.#renderSystem(this);
