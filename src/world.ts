@@ -1,20 +1,20 @@
-import type { Entity, OptionalArrayValuesMap, System, TypeToUnion } from "./types";
+import type { Entity, OptionalArrayValuesMap, System, TypeToUnion } from './types'
 
 export class World<Components extends Record<string, unknown>, RenderableData extends Record<string, unknown>> {
   #entityCount: number
   #components: OptionalArrayValuesMap<Components>
   #systems: Array<System<this>>
-  #renderSystem: (world: World<Components, RenderableData>) => Array<RenderableData>
+  #renderSystem: (world: World<Components, RenderableData>) => RenderableData[]
 
   #initialiseComponent(componentKind: keyof Components) {
-    this.#components[componentKind] = new Array(this.#entityCount).fill(null);
+    this.#components[componentKind] = new Array(this.#entityCount).fill(null)
   }
 
-  public constructor(renderSystem: (world: World<Components, RenderableData>) => Array<RenderableData>) {
+  public constructor(renderSystem: (world: World<Components, RenderableData>) => RenderableData[]) {
     this.#entityCount = 0
-    this.#components = {};
-    this.#systems = [];
-    this.#renderSystem = renderSystem;
+    this.#components = {}
+    this.#systems = []
+    this.#renderSystem = renderSystem
   }
 
   /**
@@ -80,10 +80,10 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * @example
    * const entities = world.getEntitiesByComponentKinds("position", "velocity")
    */
-  public getEntitiesByComponentKinds(...componentNames: Array<keyof Components>): Array<Entity> {
+  public getEntitiesByComponentKinds(...componentNames: Array<keyof Components>): Entity[] {
     const entities = []
     // This might be able to be done as so:
-    // Memoised get every "some" element from each array, iterate through to find duplicate numbers? zip? something else?
+    // Memoized get every "some" element from each array, iterate through to find duplicate numbers? zip? something else?
     for (let i = 0; i < this.#entityCount; i++) {
       if (componentNames.every((c) => this.#components[c]?.[i] !== null)) {
         entities.push(i)
@@ -101,7 +101,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * world.getComponentDataForEntity(myEntity, "name");
    */
   public getComponentDataForEntity<T extends keyof Components>(entity: Entity, componentName: T) {
-    return this.#components[componentName]![entity];
+    return this.#components[componentName]![entity]
   }
 
   /**
@@ -112,7 +112,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * world.registerSystem(mySystem);
    */
   public registerSystem(system: System<this>) {
-    this.#systems.push(system);
+    this.#systems.push(system)
   }
 
   /**
@@ -124,7 +124,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * const renderables = world.tick(delta, time)
    */
   public tick(delta: number, time: number) {
-    this.#systems.forEach((system) => system(delta, time)(this));
-    return this.#renderSystem(this);
+    this.#systems.forEach((system) => system(delta, time)(this))
+    return this.#renderSystem(this)
   }
 }
