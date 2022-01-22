@@ -1,17 +1,11 @@
 {
-  "name": "gameEngine",
-  "version": "1.0.0",
-  "description": "",
+  "name": "game-engine",
   "main": "src/index.ts",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "fp-ts": "2.11.7",
-    "typescript": "4.5.4"
+    "fp-ts": "2.11.7"
   },
   "devDependencies": {
+    "typescript": "4.5.5",
     "eslint-config-standard-with-typescript": "21.0.1",
     "@typescript-eslint/parser": "4.33.0",
     "eslint": "7.32.0",
