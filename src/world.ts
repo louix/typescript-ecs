@@ -100,7 +100,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * world.addComponentToEntity(myEntity, {name: "entity"});
    * world.getComponentDataForEntity(myEntity, "name");
    */
-  public getComponentDataForEntity<T extends keyof Components>(entity: Entity, componentName: T) {
+  public getComponentDataForEntity(entity: Entity, componentName: keyof Components): Components[keyof Components] | null {
     return this.#components[componentName]![entity]
   }
 
@@ -111,7 +111,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * const mySystem = //... snip
    * world.registerSystem(mySystem);
    */
-  public registerSystem(system: System<this>) {
+  public registerSystem(system: System<this>): void {
     this.#systems.push(system)
   }
 
@@ -123,7 +123,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * const delta = time - previous;
    * const renderables = world.tick(delta, time)
    */
-  public tick(delta: number, time: number) {
+  public tick(delta: number, time: number): RenderableData[] {
     this.#systems.forEach((system) => system(delta, time)(this))
     return this.#renderSystem(this)
   }
