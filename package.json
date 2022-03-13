@@ -1,9 +1,7 @@
 {
   "name": "game-engine",
   "main": "src/index.ts",
-  "dependencies": {
-    "fp-ts": "2.11.7"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "4.5.5",
     "eslint-config-standard-with-typescript": "21.0.1",
