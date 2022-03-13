@@ -100,7 +100,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * world.addComponentToEntity(myEntity, {name: "entity"});
    * world.getComponentDataForEntity(myEntity, "name");
    */
-  public getComponentDataForEntity(entity: Entity, componentName: keyof Components): Components[keyof Components] | null {
+  public getComponentDataForEntity<T extends keyof Components>(entity: Entity, componentName: T): Components[T] | null {
     return this.#components[componentName]![entity]
   }
 
