@@ -4,23 +4,31 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   #entityCount: number
   #components: OptionalArrayValuesMap<Components>
   #systems: Array<System<this>>
-  #renderSystem: (world: World<Components, RenderableData>) => RenderableData[]
+  #getRenderables: (world: World<Components, RenderableData>) => Array<RenderableData>
 
   #initialiseComponent(componentKind: keyof Components) {
     this.#components[componentKind] = new Array(this.#entityCount).fill(null)
   }
-
-  public constructor(renderSystem: (world: World<Components, RenderableData>) => RenderableData[]) {
+  /**
+   * 
+   * @param getRenderables
+   * Function that runs every tick after all systems,
+   * should return any required renderable data.
+   * @param systems
+   * Functions run on every tick,
+   * usually used to mutate internal world state.
+   */
+  public constructor(getRenderables: (world: World<Components, RenderableData>) => Array<RenderableData>, systems: Array<System<World<Components, RenderableData>>> = []) {
     this.#entityCount = 0
     this.#components = {}
-    this.#systems = []
-    this.#renderSystem = renderSystem
+    this.#systems = systems
+    this.#getRenderables = getRenderables
   }
 
   /**
    * Create and return a new entity
    * @example
-   * const world = new World();
+   * const world = new World(getRenderables);
    * const myEntity = world.newEntity();
    */
   public newEntity(): Entity {
@@ -47,7 +55,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   /**
    * Add (or replace) a component to an entity
    * @example
-   * const world = new World();
+   * const world = new World(getRenderables);
    * const myEntity = world.newEntity();
    * world.addComponentToEntity(myEntity, {name: "entity"});
    */
@@ -62,7 +70,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   /**
    * Remove a component from an entity
    * @example
-   * const world = new World();
+   * const world = new World(getRenderables);
    * const myEntity = world.newEntity();
    * world.addComponentToEntity(myEntity, {name: "entity"});
    * world.removeComponentFromEntity(myEntity, "name");
@@ -82,8 +90,6 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    */
   public getEntitiesByComponentKinds(...componentNames: Array<keyof Components>): Entity[] {
     const entities = []
-    // This might be able to be done as so:
-    // Memoized get every "some" element from each array, iterate through to find duplicate numbers? zip? something else?
     for (let i = 0; i < this.#entityCount; i++) {
       if (componentNames.every((c) => this.#components[c]?.[i] !== null)) {
         entities.push(i)
@@ -95,7 +101,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   /**
    * Get the data associated with an entity for a given component
    * @example
-   * const world = new World();
+   * const world = new World(getRenderables);
    * const myEntity = world.newEntity();
    * world.addComponentToEntity(myEntity, {name: "entity"});
    * world.getComponentDataForEntity(myEntity, "name");
@@ -107,9 +113,19 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   /**
    * Register a system with the world to be executed at runtime.
    * @example
-   * const world = new World();
+   * const world = new World(getRenderables);
    * const mySystem = //... snip
    * world.registerSystem(mySystem);
+   * 
+   * If you intend to have World on a Web Worker, you cannot use this
+   * as functions are not serializable with:
+   * https://developer.mozilla.org/en-US/docs/Web/API/structuredClone
+   * 
+   * Instead you can add the systems when World is created:
+   * @example
+   * const mySystem1 = //... snip
+   * const mySystem2 = //... snip
+   * const world = new World(getRenderables, [mySystem1, mySystem2]);
    */
   public registerSystem(system: System<this>): void {
     this.#systems.push(system)
@@ -118,13 +134,13 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   /**
    * Execute all associated systems, and return everything that needs rendering!
    * @example
-   * const world = new World();
+   * const world = new World(getRenderables);
    * const time = performance.now();
    * const delta = time - previous;
    * const renderables = world.tick(delta, time)
    */
   public tick(delta: number, time: number): RenderableData[] {
     this.#systems.forEach((system) => system(delta, time)(this))
-    return this.#renderSystem(this)
+    return this.#getRenderables(this)
   }
 }
