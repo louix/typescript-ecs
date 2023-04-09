@@ -53,18 +53,19 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
   }
 
   /**
-   * Add (or replace) a component to an entity
+   * Add (or replace) component(s) to an entity
    * @example
    * const world = new World(getRenderables);
    * const myEntity = world.newEntity();
-   * world.addComponentToEntity(myEntity, {name: "entity"});
+   * world.addComponentsToEntity(myEntity, {name: "entity"});
    */
-  public addComponentToEntity(entity: Entity, component: TypeToUnion<Components>): void {
-    const [key, value] = Object.entries(component)[0]
-    if (this.#components[key as keyof Components] === undefined) {
-      this.#initialiseComponent(key)
-    }
-    this.#components[key as keyof Components]![entity] = value
+  public addComponentsToEntity(entity: Entity, components: TypeToUnion<Components>): void {
+    Object.entries(components).forEach(([key, value]) => {
+      if (this.#components[key as keyof Components] === undefined) {
+        this.#initialiseComponent(key)
+      }
+      this.#components[key as keyof Components]![entity] = value
+    })
   }
 
   /**
