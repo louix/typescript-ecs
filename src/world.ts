@@ -1,16 +1,20 @@
 import type { Entity, OptionalArrayValuesMap, System, TypeToUnion } from './types'
 
-export class World<Components extends Record<string, unknown>, RenderableData extends Record<string, unknown>> {
+export class World<
+  Components extends Record<string, any>,
+  RenderableData extends Record<string, any>,
+  ExternalState extends Record<string, any>> {
   #entityCount: number
   #components: OptionalArrayValuesMap<Components>
-  #systems: Array<System<this>>
-  #getRenderables: (world: World<Components, RenderableData>) => Array<RenderableData>
+  #systems: Array<System<Components, RenderableData, ExternalState>>
+  #getRenderables: (world: World<Components, RenderableData, ExternalState>) => Array<RenderableData>
 
   #initialiseComponent(componentKind: keyof Components) {
     this.#components[componentKind] = new Array(this.#entityCount).fill(null)
   }
+
   /**
-   * 
+   *
    * @param getRenderables
    * Function that runs every tick after all systems,
    * should return any required renderable data.
@@ -18,7 +22,7 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * Functions run on every tick,
    * usually used to mutate internal world state.
    */
-  public constructor(getRenderables: (world: World<Components, RenderableData>) => Array<RenderableData>, systems: Array<System<World<Components, RenderableData>>> = []) {
+  public constructor(getRenderables: (world: World<Components, RenderableData, ExternalState>) => Array<RenderableData>, systems: Array<System<Components, RenderableData, ExternalState>> = []) {
     this.#entityCount = 0
     this.#components = {}
     this.#systems = systems
@@ -117,18 +121,18 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * const world = new World(getRenderables);
    * const mySystem = //... snip
    * world.registerSystem(mySystem);
-   * 
+   *
    * If you intend to have World on a Web Worker, you cannot use this
    * as functions are not serializable with:
    * https://developer.mozilla.org/en-US/docs/Web/API/structuredClone
-   * 
+   *
    * Instead you can add the systems when World is created:
    * @example
    * const mySystem1 = //... snip
    * const mySystem2 = //... snip
    * const world = new World(getRenderables, [mySystem1, mySystem2]);
    */
-  public registerSystem(system: System<this>): void {
+  public registerSystem(system: System<Components, RenderableData, ExternalState>): void {
     this.#systems.push(system)
   }
 
@@ -138,10 +142,11 @@ export class World<Components extends Record<string, unknown>, RenderableData ex
    * const world = new World(getRenderables);
    * const time = performance.now();
    * const delta = time - previous;
-   * const renderables = world.tick(delta, time)
+   * const externalState = keyPressed.UP ? { direction: "up"} : { direction: "down" }
+   * const renderables = world.tick(delta, time, externalState)
    */
-  public tick(delta: number, time: number): RenderableData[] {
-    this.#systems.forEach((system) => system(delta, time)(this))
+  public tick(delta: number, time: number, externalState: ExternalState): RenderableData[] {
+    this.#systems.forEach((system) => system(delta, time)(this, externalState))
     return this.#getRenderables(this)
   }
 }
