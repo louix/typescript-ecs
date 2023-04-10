@@ -9,8 +9,11 @@ export class World<
   #systems: Array<System<Components, RenderableData, ExternalState>>
   #getRenderables: (world: World<Components, RenderableData, ExternalState>) => Array<RenderableData>
 
-  #initialiseComponent(componentKind: keyof Components) {
-    this.#components[componentKind] = new Array(this.#entityCount).fill(null)
+  #getOrInitializeComponent<K extends keyof Components>(componentKind: K): Array<Components[K] | null> {
+    if (this.#components[componentKind] === undefined) {
+      this.#components[componentKind] = new Array(this.#entityCount).fill(null)
+    }
+    return this.#components[componentKind]!
   }
 
   /**
@@ -37,23 +40,9 @@ export class World<
    */
   public newEntity(): Entity {
     Object.keys(this.#components).forEach((k) => {
-      if (this.#components[k as keyof Components] === undefined) {
-        this.#initialiseComponent(k)
-      }
-      this.#components[k as keyof Components]!.push(null)
+      this.#getOrInitializeComponent(k as keyof Components).push(null);
     })
     return this.#entityCount++
-  }
-
-  /**
-   * Alias for addComponentToEntity
-   */
-  public updateComponentForEntity(entity: Entity, component: TypeToUnion<Components>): void {
-    const [key, value] = Object.entries(component)[0]
-    if (this.#components[key as keyof Components] === undefined) {
-      this.#initialiseComponent(key)
-    }
-    this.#components[key as keyof Components]![entity] = value
   }
 
   /**
@@ -65,10 +54,7 @@ export class World<
    */
   public addComponentsToEntity(entity: Entity, components: TypeToUnion<Components>): void {
     Object.entries(components).forEach(([key, value]) => {
-      if (this.#components[key as keyof Components] === undefined) {
-        this.#initialiseComponent(key)
-      }
-      this.#components[key as keyof Components]![entity] = value
+      this.#getOrInitializeComponent(key as keyof Components)[entity] = value;
     })
   }
 
@@ -81,10 +67,7 @@ export class World<
    * world.removeComponentFromEntity(myEntity, "name");
    */
   public removeComponentFromEntity(entity: Entity, componentName: keyof Components): void {
-    if (this.#components[componentName] === undefined) {
-      this.#initialiseComponent(componentName)
-    }
-    this.#components[componentName]![entity] = null
+    this.#getOrInitializeComponent(componentName)[entity] = null;
   }
 
   /**
@@ -96,7 +79,7 @@ export class World<
   public getEntitiesByComponentKinds(...componentNames: Array<keyof Components>): Entity[] {
     const entities = []
     for (let i = 0; i < this.#entityCount; i++) {
-      if (componentNames.every((c) => this.#components[c]?.[i] !== null)) {
+      if (componentNames.every((c) => this.#getOrInitializeComponent(c)[i] !== null)) {
         entities.push(i)
       }
     }
@@ -112,7 +95,7 @@ export class World<
    * world.getComponentDataForEntity(myEntity, "name");
    */
   public getComponentDataForEntity<T extends keyof Components>(entity: Entity, componentName: T): Components[T] | null {
-    return this.#components[componentName]![entity]
+    return this.#getOrInitializeComponent(componentName)[entity]
   }
 
   /**
